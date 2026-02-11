@@ -9,6 +9,20 @@ K-Snap Delta is a space-efficient "DVR" for Kubernetes resources. It records obj
  - **TUI Browser:** Side-by-side "VimDiff" style view with live update support and highlighted changes.
  - **Zero-Cluster Footprint:** Runs on your deployer or laptop using standard kubectl binaries.
 
+## Prerequisites
+Before running K-Snap, ensure your environment has:
+- Python 3.10+: Uses modern type hinting and pathlib.
+- kubectl: Configured with access to your cluster (~/.kube/config).
+- Standard Libraries: Uses curses for the TUI (included in most Linux/macOS Python distributions).
+
+## Installation
+Run this command from inside the k-snap project folder:
+```bash
+# Clone the project and install via pip
+pip install --user .
+```
+The `--user` flag is important on production servers so you don't need sudo permissions and don't mess with system-wide Python libraries.
+
 ## Usage
 ### 1. Record History
 You can record all resources of a certain type, or target a specific one by name.
