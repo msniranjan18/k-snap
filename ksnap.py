@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-k-snap: Kubernetes object history recorder and browser.
+ksnap: Kubernetes object history recorder and browser.
 Uses a Checkpoint + Delta strategy for space-efficient history storage.
 """
 
@@ -119,7 +119,7 @@ class Recorder:
     def _handle_sigint(self, signum, frame):
         self._running = False
         print(
-            f"\n\n[k-snap] Recorder stopped.\n"
+            f"\n\n[ksnap] Recorder stopped.\n"
             f"  Total events processed : {self._total_events}\n"
             f"  Files saved            : {self._saved_files}\n"
             f"  Output directory       : {self.out_dir}\n",
@@ -227,7 +227,7 @@ class Recorder:
                 f"--resource-version={self._last_resource_version}",
                 "-o", "json",
             ]
-        print(f"[k-snap] Starting: {' '.join(cmd)}", file=sys.stderr)
+        print(f"[ksnap] Starting: {' '.join(cmd)}", file=sys.stderr)
         proc = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
@@ -276,13 +276,13 @@ class Recorder:
                     self._handle_event(event)
                 if self._running:
                     print(
-                        f"[k-snap] kubectl exited, reconnecting in {backoff}s…",
+                        f"[ksnap] kubectl exited, reconnecting in {backoff}s…",
                         file=sys.stderr,
                     )
                     time.sleep(backoff)
                     backoff = min(backoff * 2, 60)
             except Exception as exc:
-                print(f"[k-snap] Error: {exc}; retrying in {backoff}s…", file=sys.stderr)
+                print(f"[ksnap] Error: {exc}; retrying in {backoff}s…", file=sys.stderr)
                 time.sleep(backoff)
                 backoff = min(backoff * 2, 60)
             else:
@@ -454,7 +454,7 @@ class Browser:
 
     def _draw_header(self, stdscr, total_versions: int):
         h, w = stdscr.getmaxyx()
-        title = f" k-snap Browser  |  {self.directory}  |  Versions: {total_versions} "
+        title = f" ksnap Browser  |  {self.directory}  |  Versions: {total_versions} "
         nav = f" Showing: T={self._current_idx-1} (left)  T={self._current_idx} (right) "
         keys = " ^N=Next  ^P=Prev  ^Q=Quit "
 
@@ -721,14 +721,14 @@ def cmd_browse(args):
             )
             sys.exit(1)
 
-    print(f"[k-snap] Browsing '{resource_name}' in {directory}")
+    print(f"[ksnap] Browsing '{resource_name}' in {directory}")
     browser = Browser(directory, resource_name)
     browser.run()
 
 
 def main():
     parser = argparse.ArgumentParser(
-        prog="k-snap",
+        prog="ksnap",
         description="Record and browse Kubernetes object history.",
     )
     sub = parser.add_subparsers(dest="command", required=True)
