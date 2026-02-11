@@ -16,13 +16,20 @@ Before running K-Snap, ensure your environment has:
 - Standard Libraries: Uses curses for the TUI (included in most Linux/macOS Python distributions).
 
 ## Installation
-Run this command from inside the k-snap project folder:
 ```bash
-# Clone the project and install via pip
-pip install --user .
+# 1. Initialize environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# 2. Install dependencies
+pip install PyYAML
+
+# optional
+chmod +x ksnap.py
+
+# To use ksnap from any directory without typing ./ksnap.py, add this to your ~/.bashrc or ~/.zshrc:
+alias ksnap='/path/to/k-snap/.venv/bin/python3 /path/to/k-snap/k-snap.py'
 ```
-The `--user` flag is important on production servers so you don't need sudo permissions and don't mess with system-wide Python libraries.
-After installation the `ksnap` command is available system-wide.
 
 ## Usage
 ### 1. Record History
