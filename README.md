@@ -24,11 +24,22 @@ source .venv/bin/activate
 # 2. Install dependencies
 pip install PyYAML
 
-# optional
+# 3. Install in "editable" mode
+# This installs the dependencies and makes the 'ksnap' command 
+# point to your actual script file.
+pip install -e .
+
+# Now, whenever your virtual environment is active, you can simply type:
+ksnap record deployments -n prod
+
+# If you are not in the virtual environment, you can run it via the absolute path:
+/path/to/project/.venv/bin/ksnap record deployments -n prod
+
+# 3. Alternative
 chmod +x ksnap.py
 
 # To use ksnap from any directory without typing ./ksnap.py, add this to your ~/.bashrc or ~/.zshrc:
-alias ksnap='/path/to/k-snap/.venv/bin/python3 /path/to/k-snap/k-snap.py'
+alias ksnap='/path/to/k-snap/.venv/bin/python3 /path/to/k-snap/ksnap.py'
 ```
 
 ## Usage
