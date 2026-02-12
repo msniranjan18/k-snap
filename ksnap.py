@@ -428,6 +428,8 @@ class Browser:
         self._scroll_right = 0
         self._left_content: list[str] = []
         self._right_content: list[str] = []
+        self._left_highlights: set[int] = set()   # line indices to highlight in left pane
+        self._right_highlights: set[int] = set()  # line indices to highlight in right pane
         self._lock = threading.Lock()
         self._running = True
 
@@ -443,12 +445,35 @@ class Browser:
     # ---- Content loading ----
 
     def _load_pair(self):
-        """Reconstruct left (T-1) and right (T) pane contents."""
+        """Reconstruct left (T-1) and right (T) pane contents and compute diff highlights."""
         t = self._current_idx
         left_raw = reconstruct_version(self.directory, t - 1, self.resource_name)
         right_raw = reconstruct_version(self.directory, t, self.resource_name)
         self._left_content = left_raw.splitlines()
         self._right_content = right_raw.splitlines()
+
+        # Use SequenceMatcher to identify actual changes (not just shifted lines)
+        matcher = difflib.SequenceMatcher(None, self._left_content, self._right_content)
+        
+        self._left_highlights = set()
+        self._right_highlights = set()
+
+        for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+            if tag == "replace":
+                # Lines that changed content
+                for i in range(i1, i2):
+                    self._left_highlights.add(i)
+                for j in range(j1, j2):
+                    self._right_highlights.add(j)
+            elif tag == "delete":
+                # Lines removed from left
+                for i in range(i1, i2):
+                    self._left_highlights.add(i)
+            elif tag == "insert":
+                # Lines added to right
+                for j in range(j1, j2):
+                    self._right_highlights.add(j)
+            # tag == "equal" → no highlighting needed
 
     # ---- Drawing ----
 
@@ -474,9 +499,8 @@ class Browser:
         stdscr.attroff(curses.color_pair(2))
 
     def _draw_pane(self, stdscr, lines: list[str], col_start: int, pane_w: int,
-                   pane_h: int, scroll: int, label: str, highlight_diffs: bool = False,
-                   other_lines: list[str] = None):
-        """Render one pane's content."""
+                   pane_h: int, scroll: int, label: str, highlight_set: set[int] = None):
+        """Render one pane's content with diff-based highlighting."""
         h, w = stdscr.getmaxyx()
         # Pane header
         hdr = f"─── {label} ".ljust(pane_w, "─")[:pane_w]
@@ -495,21 +519,17 @@ class Browser:
                 break
             if line_idx < len(lines):
                 text = lines[line_idx].rstrip()[:pane_w - 1].ljust(pane_w - 1)
-                # Highlight differing lines
-                if highlight_diffs and other_lines is not None:
-                    other_text = (
-                        other_lines[line_idx].rstrip()
-                        if line_idx < len(other_lines)
-                        else ""
-                    )
-                    if text.strip() != other_text.strip():
-                        try:
-                            stdscr.attron(curses.color_pair(4))
-                            stdscr.addstr(y, col_start, text)
-                            stdscr.attroff(curses.color_pair(4))
-                            continue
-                        except curses.error:
-                            pass
+                # Highlight if this line index is in the highlight set
+                should_highlight = highlight_set is not None and line_idx in highlight_set
+                
+                if should_highlight:
+                    try:
+                        stdscr.attron(curses.color_pair(4))
+                        stdscr.addstr(y, col_start, text)
+                        stdscr.attroff(curses.color_pair(4))
+                        continue
+                    except curses.error:
+                        pass
                 try:
                     stdscr.addstr(y, col_start, text)
                 except curses.error:
@@ -536,20 +556,21 @@ class Browser:
             except curses.error:
                 pass
 
-        # Left pane (T-1)
+        # Left pane (T-1) with highlights for deleted/replaced lines
         left_label = f"Version T={self._current_idx - 1}"
         self._draw_pane(
             stdscr, self._left_content,
             col_start=0, pane_w=pane_w, pane_h=pane_h,
             scroll=self._scroll_left, label=left_label,
+            highlight_set=self._left_highlights,
         )
-        # Right pane (T) — highlight diffs vs left
+        # Right pane (T) with highlights for inserted/replaced lines
         right_label = f"Version T={self._current_idx}"
         self._draw_pane(
             stdscr, self._right_content,
             col_start=pane_w + 1, pane_w=pane_w - 1, pane_h=pane_h,
             scroll=self._scroll_right, label=right_label,
-            highlight_diffs=True, other_lines=self._left_content,
+            highlight_set=self._right_highlights,
         )
         stdscr.refresh()
 
