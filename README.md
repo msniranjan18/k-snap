@@ -11,7 +11,7 @@ K-Snap Delta is a space-efficient "DVR" for Kubernetes resources. It records obj
 
 ## Prerequisites
 Before running K-Snap, ensure your environment has:
-- Python 3.10+: Uses modern type hinting and pathlib.
+- Python 3.6+
 - kubectl: Configured with access to your cluster (~/.kube/config).
 - Standard Libraries: Uses curses for the TUI (included in most Linux/macOS Python distributions).
 
